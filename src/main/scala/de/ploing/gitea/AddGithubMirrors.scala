@@ -14,19 +14,24 @@ object AddGithubMirrors {
 
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.parseFile(new File("gitea-mirror.conf"))
-    val githubProjects = getGithubProjects(config.getString("github.username"))
+    val githubProjects = getGithubProjects(config.getString("github.username"),
+      config.getBoolean("github.excludeForks"))
     println(githubProjects.size)
   }
 
-  def getGithubProjects(username: String) = {
-    def getRecursive(url: String): Seq[GithubRepo] = {
+  def getGithubProjects(username: String, excludeForks: Boolean) = {
+    def getRecursive(url: String, result: Seq[GithubRepo] = Seq()): Seq[GithubRepo] = {
       val (link, repos) = getGithubProjectPage(url)
-      link.get("next").map { nextUrl =>
-        repos ++ getRecursive(link("next"))
-      }.getOrElse(repos)
+      link.get("next") match {
+        case None => result ++ repos
+        case Some(nextUrl) => getRecursive(nextUrl, result ++ repos)
+      }
     }
 
     getRecursive(s"https://api.github.com/users/${username}/repos")
+      .filter { repo =>
+        !excludeForks || !repo.fork
+      }
   }
 
   /**
