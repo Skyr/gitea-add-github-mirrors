@@ -29,14 +29,16 @@ object AddGithubMirrors {
 
     val githubProjects = githubOps.getProjects(config.getString("github.username"),
       config.getBoolean("github.excludeForks"))
-    println(githubProjects.size)
-
-
     val giteaProjects = giteaOps.getProjects()
 
-    giteaOps.addMirror("git://github.com/Skyr/scmversion-gradle-plugin.git",
-      giteaUserId,
-      "scmversion-gradle-plugin",
-      config.getBoolean("gitea.privateMirrors"))
+    githubProjects.foreach { githubRepo =>
+      if (!giteaProjects.contains(githubRepo.name)) {
+        println(s"New clone: ${githubRepo.name} from ${githubRepo.url}")
+        giteaOps.addMirror(githubRepo.url,
+          giteaUserId,
+          githubRepo.name,
+          config.getBoolean("gitea.privateMirrors"))
+      }
+    }
   }
 }
