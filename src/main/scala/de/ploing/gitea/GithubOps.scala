@@ -1,11 +1,12 @@
 package de.ploing.gitea
 
-import de.ploing.gitea.AddGithubMirrors.client
-import okhttp3.Request
+import okhttp3.{OkHttpClient, Request}
 import play.api.libs.json.{JsArray, Json}
 
 
-object GithubOps {
+case class GithubRepo(name: String, url: String, fork: Boolean)
+
+class GithubOps(client: OkHttpClient) {
   def getProjects(username: String, excludeForks: Boolean) = {
     def getRecursive(url: String, result: Seq[GithubRepo] = Seq()): Seq[GithubRepo] = {
       val (link, repos) = getProjectPage(url)
@@ -34,14 +35,17 @@ object GithubOps {
       .get()
       .build()
     val response = client.newCall(request).execute()
-    val linkHeader = parseLinkHeader(response.header("Link"))
+    val linkHeader = GithubOps.parseLinkHeader(response.header("Link"))
     val elements = Json.parse(response.body().byteStream()).validate[JsArray].get.value
     val repoData = elements.map { entry =>
       GithubRepo((entry \ "name").as[String], (entry \ "git_url").as[String], (entry \ "fork").as[Boolean])
     }
     (linkHeader, repoData)
   }
+}
 
+
+object GithubOps {
   /**
     * Parses the Github Link header
     *

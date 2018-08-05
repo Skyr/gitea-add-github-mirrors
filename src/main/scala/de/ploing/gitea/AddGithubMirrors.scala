@@ -6,8 +6,6 @@ import java.util.concurrent.TimeUnit
 import com.typesafe.config.ConfigFactory
 import okhttp3.OkHttpClient
 
-case class GithubRepo(name: String, url: String, fork: Boolean)
-
 object AddGithubMirrors {
   val client = new OkHttpClient.Builder()
     .connectTimeout(10, TimeUnit.SECONDS)
@@ -16,31 +14,27 @@ object AddGithubMirrors {
 
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.parseFile(new File("gitea-mirror.conf"))
+    val githubOps = new GithubOps(client)
+    val giteaOps = new GiteaOps(client,
+      config.getString("gitea.token"),
+      config.getString("gitea.url"),
+      if (config.hasPath("gitea.org")) {
+        config.getString("gitea.org")
+      } else {
+        config.getString("gitea.user")
+      },
+      config.hasPath("gitea.user"))
 
-    val githubProjects = GithubOps.getProjects(config.getString("github.username"),
+    val giteaUserId = giteaOps.getUserId()
+
+    val githubProjects = githubOps.getProjects(config.getString("github.username"),
       config.getBoolean("github.excludeForks"))
     println(githubProjects.size)
 
-    val giteaToken = config.getString("gitea.token")
-    val giteaBaseUrl = if (config.getString("gitea.url").endsWith("/")) {
-      config.getString("gitea.url")
-    } else {
-      s"${config.getString("gitea.url")}/"
-    }
-    val giteaUserApiBaseUrl = if (config.hasPath("gitea.org")) {
-      s"${giteaBaseUrl}api/v1/orgs/${config.getString("gitea.org")}"
-    } else {
-      s"${giteaBaseUrl}api/v1/users/${config.getString("gitea.user")}"
-    }
-    val giteaRepoUrl = s"${giteaUserApiBaseUrl}/repos"
 
-    val giteaUserId = GiteaOps.getUserId(giteaUserApiBaseUrl, giteaToken)
-    println(giteaUserId)
+    val giteaProjects = giteaOps.getProjects()
 
-    val giteaProjects = GiteaOps.getProjects(giteaRepoUrl, giteaToken)
-
-    GiteaOps.addMirror(s"${giteaBaseUrl}api/v1/repos/migrate", giteaToken,
-      "git://github.com/Skyr/scmversion-gradle-plugin.git",
+    giteaOps.addMirror("git://github.com/Skyr/scmversion-gradle-plugin.git",
       giteaUserId,
       "scmversion-gradle-plugin",
       config.getBoolean("gitea.privateMirrors"))
