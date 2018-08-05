@@ -61,14 +61,11 @@ class GiteaOps(client: OkHttpClient, token: String, _giteaBaseUrl: String, ideni
     val migrateApiUrl = s"${baseUrl}api/v1/repos/migrate"
     val data = MigrateJson(null, null, cloneUrl, "", true, privateRepo, repoName, userId)
     val jsonData = Json.toJson(data).toString()
-    println(Json.prettyPrint(Json.toJson(data)))
     val request = new Request.Builder()
       .header("Authorization", s"token ${token}")
       .url(migrateApiUrl)
       .post(RequestBody.create(MediaType.get("application/json"), jsonData))
       .build()
     val response = client.newCall(request).execute()
-    println(response.code())
-    println(response.body().string())
   }
 }
