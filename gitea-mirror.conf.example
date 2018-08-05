@@ -1,0 +1,12 @@
+github {
+  username = "..."
+  excludeForks = true
+}
+
+gitea {
+  url = "..."
+  token = "..."
+  org = "github-mirror"
+  // or user = "sts"
+  privateMirrors = true
+}
