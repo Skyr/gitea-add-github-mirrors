@@ -44,7 +44,7 @@ class GiteaOps(client: OkHttpClient, token: String, _giteaBaseUrl: String, ideni
   }
 
 
-  def addMirror(cloneUrl: String, userId: Long, repoName: String, privateRepo: Boolean): Unit = {
+  def addMirror(cloneUrl: String, userId: Long, repoName: String, description: String, privateRepo: Boolean): Unit = {
     case class MigrateJson(authPassword: String, authUsername: String, cloneAddr: String, description: String,
                            mirror: Boolean, privateRepo: Boolean, repoName: String, uid: Long)
     implicit val migrateJsonWrites: Writes[MigrateJson] = (
@@ -59,7 +59,7 @@ class GiteaOps(client: OkHttpClient, token: String, _giteaBaseUrl: String, ideni
       )(unlift(MigrateJson.unapply))
 
     val migrateApiUrl = s"${baseUrl}api/v1/repos/migrate"
-    val data = MigrateJson(null, null, cloneUrl, "", true, privateRepo, repoName, userId)
+    val data = MigrateJson(null, null, cloneUrl, description, true, privateRepo, repoName, userId)
     val jsonData = Json.toJson(data).toString()
     val request = new Request.Builder()
       .header("Authorization", s"token ${token}")

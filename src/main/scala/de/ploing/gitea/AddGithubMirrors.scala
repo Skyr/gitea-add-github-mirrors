@@ -37,6 +37,7 @@ object AddGithubMirrors {
         giteaOps.addMirror(githubRepo.url,
           giteaUserId,
           githubRepo.name,
+          githubRepo.description,
           config.getBoolean("gitea.privateMirrors"))
       }
     }

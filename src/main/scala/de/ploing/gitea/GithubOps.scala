@@ -4,7 +4,7 @@ import okhttp3.{OkHttpClient, Request}
 import play.api.libs.json.{JsArray, Json}
 
 
-case class GithubRepo(name: String, url: String, fork: Boolean)
+case class GithubRepo(name: String, url: String, description: String, fork: Boolean)
 
 class GithubOps(client: OkHttpClient) {
   def getProjects(username: String, excludeForks: Boolean) = {
@@ -38,7 +38,8 @@ class GithubOps(client: OkHttpClient) {
     val linkHeader = GithubOps.parseLinkHeader(response.header("Link"))
     val elements = Json.parse(response.body().byteStream()).validate[JsArray].get.value
     val repoData = elements.map { entry =>
-      GithubRepo((entry \ "name").as[String], (entry \ "git_url").as[String], (entry \ "fork").as[Boolean])
+      GithubRepo((entry \ "name").as[String], (entry \ "git_url").as[String],
+        (entry \ "description").as[String], (entry \ "fork").as[Boolean])
     }
     (linkHeader, repoData)
   }
