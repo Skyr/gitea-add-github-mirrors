@@ -15,3 +15,7 @@ lazy val root = (project in file(".")).
       scalaTest % Test
     )
   )
+
+mainClass in assembly := Some("de.ploing.gitea.AddGithubMirrors")
+
+assemblyJarName in assembly := "gitea-github-mirrors.jar"
