@@ -3,6 +3,8 @@ package de.ploing.gitea
 import okhttp3.{OkHttpClient, Request}
 import play.api.libs.json.{JsArray, Json}
 
+import scala.util.Try
+
 
 case class GithubRepo(name: String, url: String, description: String, fork: Boolean)
 
@@ -35,13 +37,23 @@ class GithubOps(client: OkHttpClient) {
       .get()
       .build()
     val response = client.newCall(request).execute()
-    val linkHeader = GithubOps.parseLinkHeader(response.header("Link"))
-    val elements = Json.parse(response.body().byteStream()).validate[JsArray].get.value
-    val repoData = elements.map { entry =>
-      GithubRepo((entry \ "name").as[String], (entry \ "git_url").as[String],
-        (entry \ "description").as[String], (entry \ "fork").as[Boolean])
+    val linkHeader = GithubOps.parseLinkHeader(response.header("Link", ""))
+    if (response.isSuccessful) {
+      val elements = Json.parse(response.body().byteStream()).as[JsArray].value
+      val repoData = elements.map { entry =>
+        GithubRepo((entry \ "name").as[String], (entry \ "git_url").as[String],
+          (entry \ "description").as[String], (entry \ "fork").as[Boolean])
+      }
+      (linkHeader, repoData)
+    } else {
+      val errorMessage = Try(Json.parse(response.body().byteStream()))
+        .toOption
+        .flatMap { json =>
+          (json \ "message").validate[String].asOpt
+        }
+      println(s"Error ${response.code()} getting Github projects: ${errorMessage.getOrElse(response.body().string())}")
+      (linkHeader, Seq())
     }
-    (linkHeader, repoData)
   }
 }
 

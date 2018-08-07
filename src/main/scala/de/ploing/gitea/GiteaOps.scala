@@ -4,6 +4,8 @@ import okhttp3.{MediaType, OkHttpClient, Request, RequestBody}
 import play.api.libs.functional.syntax.{unlift, _}
 import play.api.libs.json._
 
+import scala.util.Try
+
 
 class GiteaOps(client: OkHttpClient, token: String, _giteaBaseUrl: String, idenitityName: String, isUser: Boolean) {
   private val baseUrl = if (_giteaBaseUrl.endsWith("/")) {
@@ -67,5 +69,13 @@ class GiteaOps(client: OkHttpClient, token: String, _giteaBaseUrl: String, ideni
       .post(RequestBody.create(MediaType.get("application/json"), jsonData))
       .build()
     val response = client.newCall(request).execute()
+    if (!response.isSuccessful) {
+      val errorMessage = Try(Json.parse(response.body().byteStream()))
+        .toOption
+        .flatMap { json =>
+          (json \ "message").validate[String].asOpt
+        }
+      println(s"Error ${response.code()} creating gitea mirror repo: ${errorMessage.getOrElse(response.body().string())}")
+    }
   }
 }
