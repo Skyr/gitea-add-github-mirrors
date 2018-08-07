@@ -69,12 +69,14 @@ object GithubOps {
     val pattern = """<([^>]*)>; rel="([^"]*)"""".r
     header
       .split(", *")
-      .map { s =>
-        val pattern(url, rel) = s
-        (rel, url)
-      }
-      .foldLeft(Map[String, String]()) { (map, link) =>
-        map + link
+      .map {
+          case pattern(url, rel) => Some((rel, url))
+          case _ => None
+      }.foldLeft(Map[String, String]()) { (map, link) =>
+        link match {
+          case Some(l) => map + l
+          case None => map
+        }
       }
   }
 }

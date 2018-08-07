@@ -8,4 +8,10 @@ class GithubApiSpec extends FlatSpec with Matchers {
     val parseResult = GithubOps.parseLinkHeader(linksHeader)
     parseResult.keySet should contain allOf ("next", "last")
   }
+
+  "An empty Links header" should "cause no error" in {
+    val linksHeader = ""
+    val parseResult = GithubOps.parseLinkHeader(linksHeader)
+    parseResult shouldBe empty
+  }
 }
