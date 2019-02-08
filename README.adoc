@@ -1,0 +1,44 @@
+= Gitea Github mirrors
+
+Tool to automatically add mirror repos in gitea for your github repositories 
+
+
+== Purpose
+
+If you want to keep an up-to-date copy of all your Github repos on
+a https://gitea.io/[Gitea] installation, this tool is for you.
+
+This tool iterates over both a Gitea user/organisation and a Github user.
+It checks for all Github repos if there is a corresponding Gitea repo; if
+it does not exist, it will create a mirror repo.
+
+This tool is meant to run as a cron job - it is very silent to avoid log noise.
+The only output (besides exceptions ;) is the creation of new mirror repos.
+
+
+== Compilation
+
+Prerequisite: JDK installed (at least Java 8)
+
+Build a fat jar (all libraries included) with `./sbt assembly`.
+This will create the output file `target/scala-2.12/gitea-github-mirrors.jar`.
+
+== Configuration and execution
+
+Execute the tool with `java -jar gitea-github-mirrors.jar` (jar file must be in current directory).
+The tool will read the configuration file `gitea-mirror.conf` in the current directory.
+An link:gitea-mirror.conf.example[example configuration file] can be found in the repository.
+
+The github section has the following options:
+
+username:: The username whose repos are to be mirrored
+excludeForks:: true or false. If true, Github mirrors which are forks of other mirrors are ignored.
+
+The gitlab section has the following options:
+
+url:: The base URL of the target Gitea installation
+token:: An access token to Gitea, created under user/settings/applications
+org:: The name of the organisation where the mirrors should be created
+user:: Alternatively to org: The user where the mirrors should be created
+privateMirrors:: true or false. If true, the created mirror repos are marked as private repos
+
